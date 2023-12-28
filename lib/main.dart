@@ -1,30 +1,12 @@
-import 'dart:io';
-
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/material.dart';
+import 'package:reka/export.dart';
+import 'package:get/get.dart';
 
 import 'package:reka/pages/audioplayer/audioplayer.dart';
 import 'package:reka/services/service_locator.dart';
-
-import 'package:permission_handler/permission_handler.dart';
-
-//import firebase
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:reka/pages/settingspage/Pachtnotes/pachtnotespage.dart';
 import 'package:reka/pages/settingspage/settingspage.dart';
-import 'firebase_options.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-
-//import Pages
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:reka/pages/home/home_page.dart';
-
-import 'package:discord_rpc/discord_rpc.dart';
 import 'news/model/news_model.dart';
 import 'pages/settingspage/Pachtnotes/model/pacht_model.dart';
-import 'package:go_router/go_router.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -40,13 +22,37 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await setupServiceLocator();
+  if (!Platform.isWindows) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    FirebaseAuth.instance.signInAnonymously();
+    final notificationSettings =
+        await FirebaseMessaging.instance.requestPermission(provisional: true);
+    final fcmToken = await FirebaseMessaging.instance.getToken(
+        vapidKey:
+            "BB3brG1iqS7E2NZw5ItpWyAgeA-SC756OLi6RgEReq-xilrdjeV0D3HvRrLdx1D7D9Shkcs_6zTOsfXPVEPB0JM");
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: true,
+      criticalAlert: true,
+      provisional: true,
+      sound: true,
+    );
+    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    analytics.logAppOpen();
+  }
   requestLocationPermission();
   NewsData.updateDataPeriodically();
   PachtData.updateDataPeriodically();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   if (Platform.isWindows) {
     DiscordRPC.initialize();
     DiscordRPC rpc = DiscordRPC(
@@ -67,28 +73,7 @@ Future<void> main() async {
     );
   }
 
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  FirebaseAuth.instance.signInAnonymously();
-  final notificationSettings =
-      await FirebaseMessaging.instance.requestPermission(provisional: true);
-  final fcmToken = await FirebaseMessaging.instance.getToken(
-      vapidKey:
-          "BB3brG1iqS7E2NZw5ItpWyAgeA-SC756OLi6RgEReq-xilrdjeV0D3HvRrLdx1D7D9Shkcs_6zTOsfXPVEPB0JM");
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-  NotificationSettings settings = await messaging.requestPermission(
-    alert: true,
-    announcement: false,
-    badge: true,
-    carPlay: true,
-    criticalAlert: true,
-    provisional: true,
-    sound: true,
-  );
-  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-  analytics.logAppOpen();
-
-  runApp(Start());
+  runApp(MyApp());
 }
 
 final GoRouter _router = GoRouter(routes: <RouteBase>[
@@ -105,12 +90,7 @@ final GoRouter _router = GoRouter(routes: <RouteBase>[
   GoRoute(
       path: '/audioguid',
       builder: (BuildContext context, GoRouterState state) {
-        return const MyApp();
-      }),
-  GoRoute(
-      path: '/pachtnotes',
-      builder: (BuildContext context, GoRouterState state) {
-        return const Pachtnotes();
+        return const AudioGuid();
       }),
 ]);
 
@@ -131,4 +111,19 @@ Future<void> requestLocationPermission() async {
     Permission.location,
     Permission.locationAlways,
   ].request();
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      getPages: AppRoutes.routes(),
+    );
+  }
 }

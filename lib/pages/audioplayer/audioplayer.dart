@@ -7,14 +7,14 @@ import '../../page_manager.dart';
 import '../../services/service_locator.dart';
 import 'package:reka/widget/grundg.dart';
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class AudioGuid extends StatefulWidget {
+  const AudioGuid({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<AudioGuid> createState() => _AudioGuidState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _AudioGuidState extends State<AudioGuid> {
   @override
   void initState() {
     super.initState();

@@ -1,0 +1,9 @@
+export 'sign_up.dart';
+export 'signup_controller.dart';
+export 'widgets/appbar.dart';
+export 'widgets/button.dart';
+export 'widgets/icon_container.dart';
+export 'widgets/input_form.dart';
+export 'widgets/signup_body.dart';
+export 'widgets/text_field.dart';
+export 'widgets/textfield_sufiix.dart';
